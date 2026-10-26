@@ -4,10 +4,12 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 export default function App() {
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -27,7 +29,11 @@ export default function App() {
 
  const submit = async (event) => {
   event.preventDefault();
+  if (submitting) return;
+  setSubmitting(true);
+  setSubmitError("");
 
+  try {
   const { error } = await supabase
     .from("booking_inquiries")
     .insert({
@@ -41,15 +47,20 @@ export default function App() {
       message: form.notes
     });
 
+  setSubmitting(false);
   if (error) {
     console.error("Booking error:", error);
-    alert("Booking failed: " + error.message);
+    setSubmitError("We couldn’t submit your request. Please try again.");
     return;
   }
 
   setSubmitted(true);
+  } catch (error) {
+    console.error("Booking error:", error);
+    setSubmitError("We couldn’t submit your request. Please try again.");
+    setSubmitting(false);
+  }
 };
-  };
 
   return (
     <div style={{
@@ -142,7 +153,8 @@ export default function App() {
               />
             </label>
 
-            <button type="submit" style={{
+            {submitError && <p role="alert">{submitError}</p>}
+            <button type="submit" disabled={submitting} style={{
               ...inputStyle,
               marginTop: 24,
               background: "#2563eb",
@@ -151,7 +163,7 @@ export default function App() {
               cursor: "pointer",
               fontWeight: "bold"
             }}>
-              Submit Booking Request
+              {submitting ? "Submitting…" : "Submit Booking Request"}
             </button>
           </form>
         )}
