@@ -1,6 +1,11 @@
 
 import React, { useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+);
 export default function App() {
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({
@@ -20,11 +25,30 @@ export default function App() {
     });
   };
 
-  const submit = (event) => {
-    event.preventDefault();
-    // Database connection will be added next.
-    console.log("Demo booking:", form);
-    setSubmitted(true);
+ const submit = async (event) => {
+  event.preventDefault();
+
+  const { error } = await supabase
+    .from("booking_inquiries")
+    .insert({
+      name: form.name,
+      phone: form.phone,
+      email: form.email,
+      service: form.service,
+      vehicle_type: "Other",
+      vehicle_info: form.vehicle,
+      preferred_date: form.date,
+      message: form.notes
+    });
+
+  if (error) {
+    console.error("Booking error:", error);
+    alert("Booking failed: " + error.message);
+    return;
+  }
+
+  setSubmitted(true);
+};
   };
 
   return (
@@ -48,11 +72,11 @@ export default function App() {
 
         {submitted ? (
           <div role="status">
-            <h3>Form demo completed!</h3>
-            <p>
-              Your information has not been sent yet.
-              Online booking will be enabled soon.
-            </p>
+           <h3>Booking Request Submitted!</h3>
+<p>
+  Thank you! We received your appointment request.
+  Our team will contact you to confirm availability.
+</p>
             <button onClick={() => setSubmitted(false)}>
               Start Again
             </button>
@@ -127,7 +151,7 @@ export default function App() {
               cursor: "pointer",
               fontWeight: "bold"
             }}>
-              Preview Booking Request
+              Submit Booking Request
             </button>
           </form>
         )}
