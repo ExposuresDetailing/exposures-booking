@@ -1,0 +1,4 @@
+[[redirects]]
+  from = "/scheduler"
+  to = "/index.html"
+  status = 200
